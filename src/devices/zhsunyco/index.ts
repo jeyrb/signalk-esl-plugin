@@ -3,7 +3,16 @@ import { Bitmap } from '../../render/types';
 import { DeviceMetadata, DiscoveredDevice, VendorDeviceConfig, VendorDriver } from '../types';
 import { ZHSUNYCO_PID_METADATA } from './metadata';
 import { encodeBitmap } from './encode';
-import { AdvertisedDeviceInfo, COMMAND, WOLINK_CHARACTERISTIC_UUIDS, WOLINK_SERVICE_UUID, authResponse, commandHeader, decodeAdvertisedInfo } from './protocol';
+import {
+  AdvertisedDeviceInfo,
+  COMMAND,
+  WOLINK_CHARACTERISTIC_UUIDS,
+  WOLINK_SERVICE_UUID,
+  authResponse,
+  commandHeader,
+  decodeAdvertisedInfo,
+  decodeStatus,
+} from './protocol';
 
 /** node-ble has no MTU API; this matches the reference driver's mtu(247)-9 default. */
 const UPLOAD_CHUNK_SIZE = 238;
@@ -96,8 +105,15 @@ export class ZhsunycoDriver implements VendorDriver {
           throw new Error(`zhsunyco device reports unrecognised PID 0x${info.pid.toString(16).padStart(4, '0')}`);
         }
 
-        const statusReceived = new Promise<void>((resolve) => {
-          statusChar.once('valuechanged', () => resolve());
+        const statusReceived = new Promise<void>((resolve, reject) => {
+          statusChar.once('valuechanged', (data: Buffer) => {
+            const { errorCode } = decodeStatus(data);
+            if (errorCode === 0) {
+              resolve();
+            } else {
+              reject(new Error(`zhsunyco device reported error 0x${errorCode.toString(16).padStart(2, '0')} after refresh`));
+            }
+          });
         });
         await statusChar.startNotifications();
 
