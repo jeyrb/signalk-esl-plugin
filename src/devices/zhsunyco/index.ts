@@ -68,7 +68,10 @@ export class ZhsunycoDriver implements VendorDriver {
           vendor: this.vendor,
           pid: info?.pid,
           metadata: info ? this.metadataForPid(info.pid) : undefined,
-          rssi: await device.getRSSI().catch(() => undefined),
+          rssi: await device
+            .getRSSI()
+            .then((value) => (value === undefined ? undefined : Number(value)))
+            .catch(() => undefined),
         });
       }
       return found;
