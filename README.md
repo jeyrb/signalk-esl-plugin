@@ -26,6 +26,14 @@ Templates are simply SVG files, to which expressions can be added to use SignalK
 - `unitValue`
 - `tideLabel`
 
+## CLI
+
+To get fast feedback on templates and shelf devices without updating and configuring SignalK, a CLI is provided that has these commands.
+
+- `vendors` - list supported vendors
+- `scan` - report supported devices found from a BLE scan
+- `render` - transform an SVG template and data into a PNG
+- `paint` - render an SVG template and data to a selected ESL
 
 ## Vendors
 
