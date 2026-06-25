@@ -8,6 +8,22 @@ Since they are designed to be used in large quantity in small shops, they are ch
 
 Unlike some eInk projects, this plugin doesn't require any physical modification to the labels, or loading any new firmware. It can send an image to a supported shelf label fresh out of the box.
 
+## Examples
+
+![Tidal Clock](docs/assets/example_tidal_clock.png)
+
+## Templating
+
+Templates are simply SVG files, to which expressions can be added to use SignalK data, and optionally use helper functions to make it easier to read. The template can have sample data in the placeholder, so is easy to layout and visualize.
+
+### Template Helpers
+
+- `formatTime`
+- `truncate`
+- `utcOffset`
+- `unitValue`
+- `tideLabel`
+
 
 ## Vendors
 
