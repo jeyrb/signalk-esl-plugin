@@ -11,6 +11,18 @@ registerDriver(new ZhsunycoDriver());
 const program = new Command();
 program.name('esl-cli').description('Local CLI for testing ESL device scan and paint without a SignalK server');
 
+program.option(
+  '-r, --require <module>',
+  'require a module before running, e.g. an npm package that registers a vendor driver (repeatable)',
+  (value, previous: string[] = []) => [...previous, value],
+);
+
+program.hook('preAction', () => {
+  for (const mod of (program.opts().require as string[] | undefined) ?? []) {
+    require(mod);
+  }
+});
+
 program
   .command('vendors')
   .description('List supported vendors and the device models each has confirmed metadata for')

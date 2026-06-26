@@ -1,3 +1,5 @@
+import { allDrivers } from './devices/registry';
+
 export interface DeviceConfig {
   friendlyName: string;
   vendor: string;
@@ -40,7 +42,7 @@ export function configSchema(): object {
           required: ['friendlyName', 'vendor', 'address', 'templateName', 'dataSourceType', 'updateFrequencySeconds'],
           properties: {
             friendlyName: { type: 'string', title: 'Friendly name' },
-            vendor: { type: 'string', title: 'Vendor', enum: ['zhsunyco'] },
+            vendor: { type: 'string', title: 'Vendor', enum: allDrivers().map((driver) => driver.vendor) },
             address: { type: 'string', title: 'BLE address' },
             aesKey: { type: 'string', title: 'BLE AES key (vendor-specific, if required)' },
             templateName: { type: 'string', title: 'Template file name' },

@@ -16,8 +16,17 @@
     "watch": "tsc --watch",
     "cli": "ts-node src/cli/index.ts"
   },
+  "signalk":{
+    "displayName":"ESL eInk Instruments",
+    "appIcon": "./img/icon-128.png",
+    "screenshots": [
+      "docs/assets/screenshots/example_tidal_clock.png"
+    ]
+  },
   "keywords": [
     "signalk-node-server-plugin",
+    "signalk-category-instruments",
+    "signalk-category-hardware",
     "signalk",
     "eink",
     "esl"
@@ -45,5 +54,15 @@
     "@types/pngjs": "^6.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.0"
-  }
+  },
+  "license": "APACHE-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhizomatics/signalk-esl-plugin.git"
+  },
+  "author": "jey burrows",
+  "bugs": {
+    "url": "https://github.com/rhizomatics/signalk-esl-plugin/issues"
+  },
+  "homepage": "https://github.com/rhizomatics/signalk-esl-plugin#readme"
 }
