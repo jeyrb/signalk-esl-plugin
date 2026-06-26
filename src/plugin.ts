@@ -26,7 +26,7 @@ async function runStartupScan(app: ServerAPI, discovered: DiscoveredDevice[], du
     }
   }
   if (discovered.length === 0) {
-    app.setPluginStatus('Scan complete - no ESL devices found nearby.');
+    app.setPluginStatus(`Scan complete - no ESL devices found nearby after ${durationSeconds} seconds.`);
     return;
   }
   const summary = discovered.map((device) => `${device.name ?? device.vendor} [${device.address}]`).join(', ');
