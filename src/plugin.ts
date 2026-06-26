@@ -15,9 +15,11 @@ const TIDES_DETECT_DELAY_MS = 5_000;
 async function runStartupScan(app: ServerAPI, discovered: DiscoveredDevice[], durationSeconds: number): Promise<void> {
   app.setPluginStatus(`Scanning for ESL devices for ${durationSeconds}s...`);
   const startedAt = Date.now();
+  let scanError: string | undefined;
   for (const driver of allDrivers()) {
     const devices = await driver.scan(durationSeconds * 1000).catch((err) => {
-      app.debug(`${driver.vendor} scan failed: ${err.message}`);
+      scanError = `${driver.vendor} scan failed: ${err.message}`;
+      app.debug(`${scanError}\n${err.stack ?? ''}`);
       return [];
     });
     for (const device of devices) {
@@ -26,6 +28,9 @@ async function runStartupScan(app: ServerAPI, discovered: DiscoveredDevice[], du
       app.debug(`discovered ${driver.vendor} device "${device.name ?? ''}" [${device.address}] pid=${pid}`);
     }
   }
+  // Surfaces the real cause in the admin UI (instead of only the debug log) - a scan that
+  // ends in well under its configured duration is almost always this, not "no devices nearby".
+  app.setPluginError(scanError ?? '');
   const elapsedSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
   if (discovered.length === 0) {
     app.setPluginStatus(`Scan complete - no ESL devices found nearby after ${elapsedSeconds} seconds.`);
