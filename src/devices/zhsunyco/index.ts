@@ -8,6 +8,7 @@ import {
   COMMAND,
   WOLINK_CHARACTERISTIC_UUIDS,
   WOLINK_SERVICE_UUID,
+  ZHSUNYCO_MANUFACTURER_ID,
   authResponse,
   commandHeader,
   decodeAdvertisedInfo,
@@ -30,8 +31,8 @@ function sleep(ms: number): Promise<void> {
 export class ZhsunycoDriver implements VendorDriver {
   readonly vendor = 'zhsunyco';
 
-  matchesAdvertisement(name: string | undefined): boolean {
-    return (name ?? '').startsWith('WL') || (name ?? '').startsWith('WOESL');
+  matchesAdvertisement(name: string | undefined, manufacturerId: number | undefined): boolean {
+    return manufacturerId === ZHSUNYCO_MANUFACTURER_ID || (name ?? '').startsWith('WL') || (name ?? '').startsWith('WOESL');
   }
 
   metadataForPid(pid: number): DeviceMetadata | undefined {
@@ -59,12 +60,12 @@ export class ZhsunycoDriver implements VendorDriver {
       for (const address of await adapter.devices()) {
         const device = await adapter.getDevice(address);
         const name = await device.getName().catch(() => undefined);
-        if (!this.matchesAdvertisement(name)) {
+        const manufacturerData = await device.getManufacturerData().catch(() => undefined);
+        const manufacturerId = manufacturerData ? Number(Object.keys(manufacturerData)[0]) : undefined;
+        if (!this.matchesAdvertisement(name, manufacturerId)) {
           continue;
         }
 
-        const manufacturerData = await device.getManufacturerData().catch(() => undefined);
-        const manufacturerId = manufacturerData ? Number(Object.keys(manufacturerData)[0]) : undefined;
         const info = manufacturerData ? decodeAdvertisedInfo(Object.values(manufacturerData)[0]) : undefined;
         found.push({
           address,
@@ -107,9 +108,12 @@ export class ZhsunycoDriver implements VendorDriver {
         if (!info) {
           throw new Error('zhsunyco device did not return valid config data');
         }
-        const metadata = this.metadataForPid(info.pid);
+        const metadata = config.modelOverride ? { pid: info.pid, ...config.modelOverride } : this.metadataForPid(info.pid);
         if (!metadata) {
-          throw new Error(`zhsunyco device reports unrecognised PID 0x${info.pid.toString(16).padStart(4, '0')}`);
+          throw new Error(
+            `zhsunyco device reports unrecognised PID 0x${info.pid.toString(16).padStart(4, '0')} - ` +
+              'pass --width/--height/--voffset/--colours to describe it manually',
+          );
         }
 
         const statusReceived = new Promise<void>((resolve, reject) => {

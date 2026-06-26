@@ -6,6 +6,9 @@ import { createCipheriv } from 'crypto';
  */
 export const WOLINK_SERVICE_UUID = '30323032-4c53-4545-4c42-4b4e494c4f57';
 
+/** BLE manufacturer ID Zhsunyco/Wolink devices advertise under. */
+export const ZHSUNYCO_MANUFACTURER_ID = 0xbbaa;
+
 export const WOLINK_CHARACTERISTIC_UUIDS = {
   data: '31323032-4c53-4545-4c42-4b4e494c4f57',
   config: '32323032-4c53-4545-4c42-4b4e494c4f57',

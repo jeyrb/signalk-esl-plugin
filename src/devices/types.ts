@@ -28,18 +28,23 @@ export interface DiscoveredDevice {
   batteryMv?: number;
 }
 
+/** Manual model facts a user can supply for hardware that isn't yet in a driver's PID table. */
+export type DeviceModelOverride = Omit<DeviceMetadata, 'pid'>;
+
 /** Per-device settings the user supplies when registering a device, beyond what's in DeviceMetadata. */
 export interface VendorDeviceConfig {
   address: string;
   /** AES key for vendors that need it, entered by the user. If omitted, vendors that have one may fall back to a stock/manufacturer-default key instead of failing. */
   aesKey?: string;
+  /** Forces the device model facts instead of looking up the advertised PID - for hardware not yet in the driver's table. */
+  modelOverride?: DeviceModelOverride;
 }
 
 export interface VendorDriver {
   vendor: string;
 
   /** Does this advertisement look like it came from one of this vendor's devices? */
-  matchesAdvertisement(name: string | undefined, manufacturerData: Buffer | undefined): boolean;
+  matchesAdvertisement(name: string | undefined, manufacturerId: number | undefined): boolean;
 
   metadataForPid(pid: number): DeviceMetadata | undefined;
 

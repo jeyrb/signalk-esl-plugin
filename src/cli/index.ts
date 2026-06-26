@@ -3,7 +3,8 @@ import { readFile, writeFile } from 'fs/promises';
 import { Command } from 'commander';
 import { allDrivers, getDriver, registerDriver } from '../devices/registry';
 import { ZhsunycoDriver } from '../devices/zhsunyco';
-import { createBluetooth, getOrDiscoverDevice } from '../devices/bleDiscovery';
+import { createBluetooth, getManufacturerId, getOrDiscoverDevice } from '../devices/bleDiscovery';
+import { Colour, DeviceModelOverride } from '../devices/types';
 import { SvgRenderer } from '../render/svgRenderer';
 import { bitmapToPng } from '../render/png';
 
@@ -11,14 +12,29 @@ registerDriver(new ZhsunycoDriver());
 
 const VENDOR_IDENTIFY_TIMEOUT_MS = 30_000;
 
-/** Connects long enough to read the advertised name, then matches it against registered drivers. */
+const COLOUR_CODES: Record<string, Colour[]> = {
+  BW: ['black', 'white'],
+  BWR: ['black', 'white', 'red'],
+  BWRY: ['black', 'white', 'red', 'yellow'],
+};
+
+function parseColours(code: string): Colour[] {
+  const colours = COLOUR_CODES[code.toUpperCase()];
+  if (!colours) {
+    throw new Error(`unknown --colours value "${code}" - expected one of ${Object.keys(COLOUR_CODES).join(', ')}`);
+  }
+  return colours;
+}
+
+/** Connects long enough to read the advertised name and manufacturer ID, then matches against registered drivers. */
 async function identifyVendor(address: string): Promise<string> {
   const { bluetooth, destroy } = createBluetooth();
   try {
     const adapter = await bluetooth.defaultAdapter();
     const device = await getOrDiscoverDevice(adapter, address, VENDOR_IDENTIFY_TIMEOUT_MS);
     const name = await device.getName().catch(() => undefined);
-    const driver = allDrivers().find((candidate) => candidate.matchesAdvertisement(name, undefined));
+    const manufacturerId = await getManufacturerId(device);
+    const driver = allDrivers().find((candidate) => candidate.matchesAdvertisement(name, manufacturerId));
     if (!driver) {
       throw new Error(`no registered vendor driver recognises device "${name ?? address}" - specify --vendor explicitly`);
     }
@@ -65,22 +81,26 @@ program
   .option('-d, --duration <seconds>', 'scan duration in seconds', '10')
   .action(async (opts) => {
     const durationMs = Number(opts.duration) * 1000;
-    let totalFound = 0;
-    console.log('vendor\taddress\tname\tpid\tlabel\tmfr\tbattery\trssi');
+    const header = ['vendor', 'address', 'name', 'pid', 'label', 'mfr', 'battery', 'rssi'];
+    const rows: string[][] = [];
     for (const driver of allDrivers()) {
       const found = await driver.scan(durationMs);
-      totalFound += found.length;
       for (const device of found) {
         const pid = device.pid !== undefined ? `0x${device.pid.toString(16).padStart(4, '0')}` : '';
         const label = device.metadata?.label ?? '';
         const manufacturerId = device.manufacturerId !== undefined ? `0x${device.manufacturerId.toString(16).padStart(4, '0')}` : '';
         const battery = device.batteryMv !== undefined ? `${device.batteryMv}mV` : '';
-        console.log(`${driver.vendor}\t${device.address}\t${device.name ?? ''}\t${pid}\t${label}\t${manufacturerId}\t${battery}\t${device.rssi ?? ''}`);
+        rows.push([driver.vendor, device.address, device.name ?? '', pid, label, manufacturerId, battery, String(device.rssi ?? '')]);
       }
     }
-    if (totalFound === 0) {
+    if (rows.length === 0) {
       console.log(`no devices found in ${opts.duration}s - try a longer scan with -d, e.g. "-d 30"`);
+      return;
     }
+    const widths = header.map((title, col) => Math.max(title.length, ...rows.map((row) => row[col].length)));
+    const printRow = (row: string[]) => console.log(row.map((cell, col) => cell.padEnd(widths[col])).join('  '));
+    printRow(header);
+    rows.forEach(printRow);
   });
 
 program
@@ -93,16 +113,27 @@ program
   .option('-k, --aes-key <hex>', 'AES-128 key for device authentication, as 32 hex characters - defaults to the vendor\'s stock key if omitted')
   .option('-w, --width <px>', 'render width', '416')
   .option('--height <px>', 'render height', '240')
+  .option('--voffset <px>', 'vertical pixel offset of the panel - overrides the looked-up model for unsupported hardware (requires --colours)', '0')
+  .option('--colours <code>', 'device colour palette for unsupported hardware: BW, BWR, or BWRY - overrides the looked-up model (uses --width/--height/--voffset)')
   .action(async (opts) => {
     const vendor = opts.vendor ?? (await identifyVendor(opts.address));
     const driver = getDriver(vendor);
     if (!driver) {
       throw new Error(`no driver registered for vendor "${vendor}"`);
     }
+    const modelOverride: DeviceModelOverride | undefined = opts.colours
+      ? {
+          label: 'manual override',
+          width: Number(opts.width),
+          height: Number(opts.height),
+          voffset: Number(opts.voffset),
+          colours: parseColours(opts.colours),
+        }
+      : undefined;
     const context = JSON.parse(await readFile(opts.data, 'utf-8'));
     const renderer = new SvgRenderer();
     const bitmap = await renderer.render(opts.template, context, Number(opts.width), Number(opts.height));
-    await driver.paint(bitmap, { address: opts.address, aesKey: opts.aesKey });
+    await driver.paint(bitmap, { address: opts.address, aesKey: opts.aesKey, modelOverride });
     console.log(`painted ${opts.address} (${bitmap.width}x${bitmap.height})`);
   });
 

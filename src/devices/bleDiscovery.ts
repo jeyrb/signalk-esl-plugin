@@ -20,6 +20,13 @@ export function createBluetooth(): { bluetooth: Bluetooth; destroy: () => void }
   return createBluetoothImpl();
 }
 
+/** BLE manufacturer ID advertised by the device, if any - the key of its manufacturer data map. */
+export async function getManufacturerId(device: Device): Promise<number | undefined> {
+  const manufacturerData = await device.getManufacturerData().catch(() => undefined);
+  const [key] = Object.keys(manufacturerData ?? {});
+  return key === undefined ? undefined : Number(key);
+}
+
 /** Uses an already-known device if BlueZ has one cached, otherwise scans until it appears. */
 export async function getOrDiscoverDevice(adapter: Adapter, address: string, timeoutMs: number): Promise<Device> {
   try {
