@@ -63,6 +63,10 @@ The primary things managed and provided by the plugin are:
 
 ### Extending
 
-Additional vendors and devices can be added by creating and installing new plugin node modules.
+Additional vendors and devices can be added by a separate npm package that implements the `VendorDriver` interface and registers itself - there's no scanning of installed packages, registration is always an explicit call by the extension's own code.
+
+- `import esl from '@rhizomatics/signalk-esl-plugin'; esl.registerVendorDriver(myDriver)`
+- In the SignalK runtime, call this from the extension's own plugin `start()`. In the CLI, load the extension with `esl-cli --require <module> <command>`.
+- Declare this package as a `peerDependency` (not a regular dependency) in the extension package, so npm resolves a single shared copy of the registry.
 
 Templates can be added to the configurable directory. [Inkscape](https://inkscape.org) free, open source, and recommended for editing templates, or your own favourite editor, or by hand in a text editor for hard core (or just tidying up the template side).
