@@ -46,7 +46,7 @@ Also known as 'Suny'
   - In mid 2026, a 4 colour (BWRY) 3.7" label retailed for about $35, with quantity discounts for bulk sets
   - Cheapest units are 2 colour 1.54", and they go up to 7.5"
 
-Python code for a variety of their labels at https://github.com/roxburghm/zhsunyco-esl
+Python code for a variety of their labels at https://github.com/roxburghm/zhsunyco-esl and https://github.com/NickWaterton/Wolink
 
 ## Architecture
 

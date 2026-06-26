@@ -1,11 +1,9 @@
-import { Device } from 'node-ble';
 import { Bitmap } from '../../render/types';
 import { DeviceMetadata, DiscoveredDevice, VendorDeviceConfig, VendorDriver } from '../types';
 import { createBluetooth, getOrDiscoverDevice } from '../bleDiscovery';
 import { ZHSUNYCO_PID_METADATA } from './metadata';
 import { encodeBitmap } from './encode';
 import {
-  AdvertisedDeviceInfo,
   COMMAND,
   WOLINK_CHARACTERISTIC_UUIDS,
   WOLINK_SERVICE_UUID,
@@ -63,13 +61,16 @@ export class ZhsunycoDriver implements VendorDriver {
           continue;
         }
 
-        const info = await readAdvertisedInfo(device);
+        const manufacturerData = await device.getManufacturerData().catch(() => undefined);
+        const manufacturerId = manufacturerData ? Number(Object.keys(manufacturerData)[0]) : undefined;
+        const info = manufacturerData ? decodeAdvertisedInfo(Object.values(manufacturerData)[0]) : undefined;
         found.push({
           address,
           name,
           vendor: this.vendor,
           pid: info?.pid,
           metadata: info ? this.metadataForPid(info.pid) : undefined,
+          manufacturerId,
           rssi: await device
             .getRSSI()
             .then((value) => (value === undefined ? undefined : Number(value)))
@@ -139,15 +140,5 @@ export class ZhsunycoDriver implements VendorDriver {
     } finally {
       destroy();
     }
-  }
-}
-
-async function readAdvertisedInfo(device: Device): Promise<AdvertisedDeviceInfo | undefined> {
-  try {
-    const manufacturerData = await device.getManufacturerData();
-    const [bytes] = Object.values(manufacturerData);
-    return bytes ? decodeAdvertisedInfo(bytes) : undefined;
-  } catch {
-    return undefined;
   }
 }

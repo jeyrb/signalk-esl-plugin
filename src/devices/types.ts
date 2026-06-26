@@ -22,6 +22,8 @@ export interface DiscoveredDevice {
   pid?: number;
   metadata?: DeviceMetadata;
   rssi?: number;
+  /** BLE manufacturer ID (the key of the advertisement's manufacturer data), if advertised. */
+  manufacturerId?: number;
 }
 
 /** Per-device settings the user supplies when registering a device, beyond what's in DeviceMetadata. */

@@ -65,13 +65,19 @@ program
   .option('-d, --duration <seconds>', 'scan duration in seconds', '10')
   .action(async (opts) => {
     const durationMs = Number(opts.duration) * 1000;
+    let totalFound = 0;
     for (const driver of allDrivers()) {
       const found = await driver.scan(durationMs);
+      totalFound += found.length;
       for (const device of found) {
         const pid = device.pid !== undefined ? `0x${device.pid.toString(16).padStart(4, '0')}` : '';
         const label = device.metadata?.label ?? '';
-        console.log(`${driver.vendor}\t${device.address}\t${device.name ?? ''}\t${pid}\t${label}\trssi=${device.rssi ?? ''}`);
+        const manufacturerId = device.manufacturerId !== undefined ? `0x${device.manufacturerId.toString(16).padStart(4, '0')}` : '';
+        console.log(`${driver.vendor}\t${device.address}\t${device.name ?? ''}\t${pid}\t${label}\tmfr=${manufacturerId}\trssi=${device.rssi ?? ''}`);
       }
+    }
+    if (totalFound === 0) {
+      console.log(`no devices found in ${opts.duration}s - try a longer scan with -d, e.g. "-d 30"`);
     }
   });
 
