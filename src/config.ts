@@ -1,6 +1,8 @@
 import { readdirSync } from 'fs';
+import { join } from 'path';
 import { ServerAPI } from '@signalk/server-api';
 import { allDrivers } from './devices/registry';
+import { DiscoveredDevice } from './devices/types';
 
 /** Binds an HTTP(S) JSON endpoint (a built-in SignalK API or a plugin-provided one, e.g. signalk-tides) into the render context. */
 export interface ProviderBinding {
@@ -9,18 +11,27 @@ export interface ProviderBinding {
   contextKey?: string;
 }
 
-export interface DeviceConfig {
-  friendlyName: string;
-  /** `"<vendor>:<pid>"`, picked from a combined enum so width/height/colour count are known from config alone - no live BLE read needed to size a render. */
-  deviceModel: string;
-  /** Plain BLE MAC address - find it via a scan (see plugin status / `esl-cli scan`) and paste it in. */
-  address: string;
-  /** Per-device override; if omitted, the vendor driver may fall back to a stock/manufacturer-default key. */
-  aesKey?: string;
-  templateName: string;
+/** A reusable named bundle of data sources that one or more devices can render their template against. */
+export interface ContextConfig {
+  id: string;
   /** Dotted SignalK paths read via `getSelfPath` and merged into the render context preserving their natural nesting. */
   signalkPaths: string[];
   providers: ProviderBinding[];
+}
+
+export interface DeviceConfig {
+  friendlyName: string;
+  /**
+   * `"<vendor>:<pid>[:<hwVersion>]@<address>"`, picked from a combined enum of recently
+   * scanned devices so one selection sets both the model (width/height/colours, known
+   * without a live BLE read) and the BLE address.
+   */
+  device: string;
+  /** Per-device override; if omitted, the vendor driver may fall back to a stock/manufacturer-default key. */
+  aesKey?: string;
+  templateName: string;
+  /** References a `ContextConfig.id` - the data this device's template is rendered against. */
+  contextId: string;
   repaintTrigger: 'subscription' | 'interval';
   /** SignalK path to subscribe to when `repaintTrigger` is `subscription` - a repaint is considered on every delta. */
   triggerPath?: string;
@@ -37,36 +48,61 @@ export interface PluginConfig {
   templatesDir: string;
   /** Run a short BLE scan on plugin start and report discoveries via plugin status, like signalk-bluetti-plugin does. */
   scanOnStart: boolean;
+  contexts: ContextConfig[];
   devices: DeviceConfig[];
 }
 
+/** The package's own bundled `templates/` directory (ships alongside `dist/`, see package.json's `files`) - resolved from here rather than `process.cwd()` so it's found regardless of where the host SignalK server was started from. */
+const BUNDLED_TEMPLATES_DIR = join(__dirname, '..', 'templates');
+
 export const DEFAULT_CONFIG: PluginConfig = {
-  templatesDir: './templates',
+  templatesDir: BUNDLED_TEMPLATES_DIR,
   scanOnStart: true,
+  contexts: [],
   devices: [],
 };
 
 /**
- * "<vendor>:<pid>[:<hwVersion>]" tokens for every device model every registered driver
- * currently has confirmed metadata for. The hwVersion suffix only appears for models
- * that need it to disambiguate a PID reused across panel sizes (see `DeviceMetadata.hwVersion`).
+ * Enum for the combined "device" field, built from recently scanned devices (only ones a
+ * registered driver actually recognised - an unrecognised model can't be painted) plus,
+ * as a fallback, whatever's already saved so an existing selection doesn't vanish from the
+ * dropdown just because this particular run hasn't re-scanned it yet.
  */
-function deviceModelOptions(): { values: string[]; labels: string[] } {
+function deviceOptions(discovered: DiscoveredDevice[], current: PluginConfig): { values: string[]; labels: string[] } {
   const values: string[] = [];
   const labels: string[] = [];
-  for (const driver of allDrivers()) {
-    for (const device of driver.supportedDevices()) {
-      values.push([driver.vendor, device.pid, device.hwVersion].filter((part) => part !== undefined).join(':'));
-      labels.push(`${driver.vendor} ${device.label} ${device.width}x${device.height} ${device.colours.length}-colour`);
+  const seen = new Set<string>();
+
+  for (const found of discovered) {
+    if (!found.metadata) {
+      continue;
+    }
+    const modelToken = [found.vendor, found.pid, found.metadata.hwVersion].filter((part) => part !== undefined).join(':');
+    const value = `${modelToken}@${found.address}`;
+    if (seen.has(value)) {
+      continue;
+    }
+    seen.add(value);
+    values.push(value);
+    labels.push(`${found.vendor} ${found.metadata.label} (${found.address})`);
+  }
+
+  for (const device of current.devices) {
+    if (!seen.has(device.device)) {
+      seen.add(device.device);
+      values.push(device.device);
+      labels.push(`${device.device} (not seen in last scan)`);
     }
   }
+
   return { values, labels };
 }
 
-export function parseDeviceModel(deviceModel: string): { vendor: string; pid: number; hwVersion?: string } | undefined {
-  const [vendor, pidStr, hwVersion] = deviceModel.split(':');
+export function parseDevice(device: string): { vendor: string; pid: number; hwVersion?: string; address: string } | undefined {
+  const [modelToken, address] = device.split('@');
+  const [vendor, pidStr, hwVersion] = (modelToken ?? '').split(':');
   const pid = Number(pidStr);
-  return vendor && Number.isInteger(pid) ? { vendor, pid, hwVersion } : undefined;
+  return vendor && address && Number.isInteger(pid) ? { vendor, pid, hwVersion, address } : undefined;
 }
 
 function templateNameOptions(templatesDir: string): string[] {
@@ -77,9 +113,10 @@ function templateNameOptions(templatesDir: string): string[] {
   }
 }
 
-export function configSchema(app: ServerAPI): object {
+export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []): object {
   const current = { ...DEFAULT_CONFIG, ...(app.readPluginOptions() as Partial<PluginConfig>) };
-  const { values: deviceModelValues, labels: deviceModelLabels } = deviceModelOptions();
+  const { values: deviceValues, labels: deviceLabels } = deviceOptions(discovered, current);
+  const contextIds = current.contexts.map((context) => context.id);
 
   return {
     type: 'object',
@@ -93,21 +130,18 @@ export function configSchema(app: ServerAPI): object {
       scanOnStart: {
         type: 'boolean',
         title: 'Scan for devices on plugin start',
-        description: 'Runs a short BLE scan and reports discovered devices via the plugin status line - copy the address into a device below.',
+        description: 'Runs a short BLE scan so discovered devices show up in a device\'s "Device" picker below.',
         default: DEFAULT_CONFIG.scanOnStart,
       },
-      devices: {
+      contexts: {
         type: 'array',
-        title: 'Devices',
+        title: 'Contexts',
+        description: 'Reusable named bundles of data (SignalK paths + API providers) that one or more devices render their template against.',
         items: {
           type: 'object',
-          required: ['friendlyName', 'deviceModel', 'address', 'templateName', 'repaintTrigger'],
+          required: ['id'],
           properties: {
-            friendlyName: { type: 'string', title: 'Friendly name' },
-            deviceModel: { type: 'string', title: 'Device model', enum: deviceModelValues, enumNames: deviceModelLabels },
-            address: { type: 'string', title: 'BLE address', description: 'e.g. aa:bb:cc:dd:ee:ff - run a scan to find this' },
-            aesKey: { type: 'string', title: 'BLE AES key (vendor-specific; leave blank to use the vendor\'s stock default key)' },
-            templateName: { type: 'string', title: 'Template file name', enum: templateNameOptions(current.templatesDir) },
+            id: { type: 'string', title: 'Context ID' },
             signalkPaths: {
               type: 'array',
               title: 'SignalK paths',
@@ -127,6 +161,27 @@ export function configSchema(app: ServerAPI): object {
                 },
               },
             },
+          },
+        },
+      },
+      devices: {
+        type: 'array',
+        title: 'Devices',
+        items: {
+          type: 'object',
+          required: ['friendlyName', 'device', 'templateName', 'contextId', 'repaintTrigger'],
+          properties: {
+            friendlyName: { type: 'string', title: 'Friendly name' },
+            device: {
+              type: 'string',
+              title: 'Device',
+              description: 'Picked from devices found by a scan (plugin start, or `esl-cli scan`) - sets both the model and BLE address.',
+              enum: deviceValues,
+              enumNames: deviceLabels,
+            },
+            aesKey: { type: 'string', title: 'BLE AES key (vendor-specific; leave blank to use the vendor\'s stock default key)' },
+            templateName: { type: 'string', title: 'Template', enum: templateNameOptions(current.templatesDir) },
+            contextId: { type: 'string', title: 'Context', enum: contextIds },
             repaintTrigger: { type: 'string', title: 'Repaint trigger', enum: ['subscription', 'interval'] },
             triggerPath: { type: 'string', title: 'Trigger SignalK path (if repaint trigger is subscription)' },
             intervalHours: { type: 'number', title: 'Repaint every N hours (if repaint trigger is interval)', minimum: 1 },

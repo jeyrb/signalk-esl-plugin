@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { ServerAPI, Path } from '@signalk/server-api';
-import { DeviceConfig, PluginConfig, ProviderBinding, parseDeviceModel } from './config';
+import { ContextConfig, DeviceConfig, PluginConfig, ProviderBinding, parseDevice } from './config';
 import { getDriver } from './devices/registry';
 import { SvgRenderer } from './render/svgRenderer';
 import { TemplateContext } from './render/types';
@@ -68,20 +68,20 @@ async function fetchProvider(binding: ProviderBinding): Promise<unknown> {
   return response.json();
 }
 
-async function assembleRawContext(app: ServerAPI, device: DeviceConfig): Promise<TemplateContext> {
-  const context: Record<string, unknown> = {};
-  for (const path of device.signalkPaths) {
-    setAtPath(context, path, app.getSelfPath(path));
+async function assembleRawContext(app: ServerAPI, context: ContextConfig): Promise<TemplateContext> {
+  const result: Record<string, unknown> = {};
+  for (const path of context.signalkPaths) {
+    setAtPath(result, path, app.getSelfPath(path));
   }
-  for (const provider of device.providers) {
+  for (const provider of context.providers) {
     const data = await fetchProvider(provider);
     if (provider.contextKey) {
-      context[provider.contextKey] = data;
+      result[provider.contextKey] = data;
     } else if (data !== null && typeof data === 'object') {
-      Object.assign(context, data);
+      Object.assign(result, data);
     }
   }
-  return context;
+  return result;
 }
 
 function clearForceRepaint(app: ServerAPI, friendlyName: string): void {
@@ -95,15 +95,20 @@ function clearForceRepaint(app: ServerAPI, friendlyName: string): void {
 }
 
 async function considerRepaint(app: ServerAPI, config: PluginConfig, device: DeviceConfig, state: RepaintState): Promise<void> {
-  const model = parseDeviceModel(device.deviceModel);
+  const model = parseDevice(device.device);
   const driver = model && getDriver(model.vendor);
   const metadata = model && driver?.metadataForPid(model.pid, model.hwVersion);
-  if (!driver || !metadata) {
-    app.debug(`"${device.friendlyName}": no driver/metadata for device model "${device.deviceModel}", skipping`);
+  if (!model || !driver || !metadata) {
+    app.debug(`"${device.friendlyName}": no driver/metadata for device "${device.device}", skipping`);
+    return;
+  }
+  const context = config.contexts.find((candidate) => candidate.id === device.contextId);
+  if (!context) {
+    app.debug(`"${device.friendlyName}": no context "${device.contextId}", skipping`);
     return;
   }
 
-  const rawContext = await assembleRawContext(app, device);
+  const rawContext = await assembleRawContext(app, context);
   const hash = hashContext(rawContext);
   if (state[device.friendlyName]?.hash === hash && !device.forceRepaint) {
     app.debug(`"${device.friendlyName}": data unchanged, skipping repaint`);
@@ -114,7 +119,7 @@ async function considerRepaint(app: ServerAPI, config: PluginConfig, device: Dev
   const renderer = new SvgRenderer();
   const templatePath = join(config.templatesDir, device.templateName);
   const bitmap = await renderer.render(templatePath, renderContext, metadata.width, metadata.height - metadata.voffset);
-  await driver.paint(bitmap, { address: device.address, aesKey: device.aesKey });
+  await driver.paint(bitmap, { address: model.address, aesKey: device.aesKey });
 
   state[device.friendlyName] = { hash };
   saveState(app, state);
