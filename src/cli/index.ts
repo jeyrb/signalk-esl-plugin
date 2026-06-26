@@ -63,16 +63,28 @@ program
   .command('vendors')
   .description('List supported vendors and the device models each has confirmed metadata for')
   .action(() => {
+    const header = ['vendor', 'pid', 'hw', 'label', 'size', 'colours'];
+    const rows: string[][] = [];
     for (const driver of allDrivers()) {
-      const devices = driver.supportedDevices();
-      if (devices.length === 0) {
-        console.log(`${driver.vendor}\t(no confirmed devices yet)`);
-        continue;
-      }
-      for (const device of devices) {
-        console.log(`${driver.vendor}\t0x${device.pid.toString(16).padStart(4, '0')}\t${device.label}\t${device.width}x${device.height}\t${device.colours.join(',')}`);
+      for (const device of driver.supportedDevices()) {
+        rows.push([
+          driver.vendor,
+          `0x${device.pid.toString(16).padStart(4, '0')}`,
+          device.hwVersion ? `0x${device.hwVersion}` : '',
+          device.label,
+          `${device.width}x${device.height}`,
+          device.colours.join(','),
+        ]);
       }
     }
+    if (rows.length === 0) {
+      console.log('(no confirmed devices yet)');
+      return;
+    }
+    const widths = header.map((title, col) => Math.max(title.length, ...rows.map((row) => row[col].length)));
+    const printRow = (row: string[]) => console.log(row.map((cell, col) => cell.padEnd(widths[col])).join('  '));
+    printRow(header);
+    rows.forEach(printRow);
   });
 
 program
