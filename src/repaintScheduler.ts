@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { ServerAPI, Path } from '@signalk/server-api';
-import { ContextConfig, DeviceConfig, PluginConfig, ProviderBinding, parseDevice } from './config';
+import { ContextConfig, DeviceConfig, PluginConfig, ProviderBinding, parseDevice, resolveTemplatePath } from './config';
 import { getDriver } from './devices/registry';
 import { SvgRenderer } from './render/svgRenderer';
 import { TemplateContext } from './render/types';
@@ -117,7 +117,7 @@ async function considerRepaint(app: ServerAPI, config: PluginConfig, device: Dev
 
   const renderContext: TemplateContext = { ...rawContext, meta: { repaintedAt: new Date().toISOString() } };
   const renderer = new SvgRenderer();
-  const templatePath = join(config.templatesDir, device.templateName);
+  const templatePath = resolveTemplatePath(config.templatesDir, device.templateName);
   const bitmap = await renderer.render(templatePath, renderContext, metadata.width, metadata.height - metadata.voffset);
   await driver.paint(bitmap, { address: model.address, aesKey: device.aesKey });
 
