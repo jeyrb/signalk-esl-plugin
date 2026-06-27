@@ -3,6 +3,7 @@ import { join } from 'path';
 import { ServerAPI } from '@signalk/server-api';
 import { allDrivers } from './devices/registry';
 import { DiscoveredDevice } from './devices/types';
+import { SIGNALK_API_URL_OPTIONS } from './resolveApiUrl';
 
 export interface DeviceConfig {
   friendlyName: string;
@@ -41,11 +42,12 @@ export interface PluginConfig {
    * the plugin API - confirmed against the signalk-server source, this resolution only happens in its
    * REST layer.
    *
-   * No universal default: the plugin always runs on the same host as the server, so `localhost` is
-   * reachable regardless of any external reverse proxy, but the port varies by install method - a bare
-   * `npm install` typically defaults to 3000, while container/systemd installs commonly default to 80.
-   * Check the server's actual listening port. Either way, these endpoints must be reachable without
-   * authentication (anonymous read access) - the plugin has no login flow.
+   * Always the local loopback address - the plugin runs on the same host as the server, so it's
+   * reachable regardless of any external reverse proxy. Left unset, the plugin probes
+   * `SIGNALK_API_URL_OPTIONS` at startup (in likelihood order: 3000 for a bare `npm install`, then
+   * 80/443 for container/systemd installs) and uses whichever responds - see `./resolveApiUrl.ts`. Set
+   * explicitly only to skip probing or to confirm a specific one is reachable; either way, it must allow
+   * anonymous read access - the plugin has no login flow.
    */
   signalkApiUrl?: string;
   devices: DeviceConfig[];
@@ -162,10 +164,10 @@ export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []
       },
       signalkApiUrl: {
         type: 'string',
-        title: 'SignalK API base URL',
+        title: 'SignalK API base URL (leave blank to auto-detect)',
         description:
-          'Used for a `signalk` path\'s automatic unit conversion (unless `format=raw`) and for an explicit `category=` binding (e.g. on a resource-sourced value like a tide level, which has no path metadata of its own). Always the local loopback address (e.g. http://localhost:3000) since this plugin runs on the same host as the server - the port varies by install method (3000 for a bare npm install, often 80 for container/systemd installs; check your server). These endpoints must allow anonymous read access - the plugin has no login flow.',
-        default: defaults.signalkApiUrl,
+          'Used for a `signalk` path\'s automatic unit conversion (unless `format=raw`) and for an explicit `category=` binding (e.g. on a resource-sourced value like a tide level, which has no path metadata of its own). Left blank, the plugin probes the realistic options at startup (3000 for a bare npm install, then 80/443 for container/systemd installs) and uses whichever responds - only set this to skip probing. Either way it must allow anonymous read access - the plugin has no login flow.',
+        enum: ['', ...SIGNALK_API_URL_OPTIONS],
       },
       devices: {
         type: 'array',

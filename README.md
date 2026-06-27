@@ -80,8 +80,8 @@ The primary things managed and provided by the plugin are:
 * SVG Template
 * SignalK API base URL
   - Used for automatic unit conversion on `signalk`-sourced numeric values and for resolving an explicit `category=` binding - neither has an in-process equivalent, both go via this server's own REST API
-  - Always the local loopback address (e.g. `http://localhost:3000`) since the plugin runs on the same host as the server - the port varies by install method (3000 for a bare npm install, often 80 for container/systemd installs - check your server)
-  - These endpoints must allow anonymous read access - the plugin has no login flow
+  - Optional: left blank, the plugin probes the only realistic values in likelihood order at startup - `http://localhost:3000` (bare npm install), `http://localhost`, `https://localhost` (container/systemd installs) - and uses whichever responds, since it always runs on the same host as the server. Set it explicitly to skip probing
+  - Either way, errors clearly if nothing responds (wrong port) or the probe is rejected (anonymous read access not enabled) - these endpoints must allow anonymous read access, since the plugin has no login flow
 
 ### Extending
 

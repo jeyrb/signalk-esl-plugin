@@ -9,6 +9,7 @@ import { Binding, findBindings } from './render/binding';
 import { TemplateContext } from './render/types';
 import { fetchCategoryDisplayUnits } from './unitCategories';
 import { fetchPathMeta } from './pathMeta';
+import { createApiUrlResolver } from './resolveApiUrl';
 
 const INTERVAL_POLL_MS = 60_000;
 const SUBSCRIPTION_DEBOUNCE_MS = 2_000;
@@ -129,7 +130,13 @@ function clearForceRepaint(app: ServerAPI, friendlyName: string): void {
   });
 }
 
-async function considerRepaint(app: ServerAPI, config: PluginConfig, device: DeviceConfig, state: RepaintState): Promise<void> {
+async function considerRepaint(
+  app: ServerAPI,
+  config: PluginConfig,
+  device: DeviceConfig,
+  state: RepaintState,
+  getApiUrl: () => Promise<string>,
+): Promise<void> {
   const model = parseDevice(device.device);
   const driver = model && getDriver(model.vendor);
   const metadata = model && driver?.metadataForPid(model.pid, model.hwVersion);
@@ -140,7 +147,11 @@ async function considerRepaint(app: ServerAPI, config: PluginConfig, device: Dev
   const templatePath = resolveTemplatePath(config.templatesDir, device.templateName);
   const bindings = findBindings(readFileSync(templatePath, 'utf-8'));
 
-  const rawContext = await assembleRawContext(app, config.signalkApiUrl, bindings);
+  const apiUrl = await getApiUrl().catch((err) => {
+    app.debug(`"${device.friendlyName}": ${err.message}`);
+    return undefined;
+  });
+  const rawContext = await assembleRawContext(app, apiUrl, bindings);
   const hash = hashContext(rawContext);
   if (state[device.friendlyName]?.hash === hash && !device.forceRepaint) {
     app.debug(`"${device.friendlyName}": data unchanged, skipping repaint`);
@@ -163,9 +174,10 @@ async function considerRepaint(app: ServerAPI, config: PluginConfig, device: Dev
 export function startRepaintScheduler(app: ServerAPI, config: PluginConfig): RepaintScheduler {
   const state = loadState(app);
   const unsubscribes: Array<() => void> = [];
+  const getApiUrl = createApiUrlResolver(config.signalkApiUrl);
 
   const repaint = (device: DeviceConfig) =>
-    considerRepaint(app, config, device, state).catch((err) => app.debug(`"${device.friendlyName}": repaint failed: ${err.message}`));
+    considerRepaint(app, config, device, state, getApiUrl).catch((err) => app.debug(`"${device.friendlyName}": repaint failed: ${err.message}`));
 
   const intervalDevices = config.devices.filter((device) => device.repaintTrigger === 'interval');
   if (intervalDevices.length > 0) {
