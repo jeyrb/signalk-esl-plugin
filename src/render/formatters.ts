@@ -25,19 +25,33 @@ export function formatDisplayUnits(value: number, displayUnits: DisplayUnits, ro
 }
 
 /**
- * Shows the explicit IANA zone name rather than an abbreviation (e.g. "BST") - UK tide tables are
- * officially published in GMT, so the basis for the displayed time must be unambiguous rather than
- * just locally styled. Always reads the local vessel's timezone (`signalk.self`), regardless of which
- * vessel's value is being formatted - the display's own clock/locale is what matters.
+ * The local vessel's timezone (`signalk.self.environment.time.timezoneRegion`), regardless of which
+ * vessel's value is being formatted - the display's own clock/locale is what matters, not the data
+ * source's. Falls back to UTC when unset.
  */
-function formatLocalTime(value: unknown, context: TemplateContext): string {
-  if (typeof value !== 'string') return '';
+function selfTimezone(context: TemplateContext): string {
   const signalk = context.signalk as Record<string, unknown> | undefined;
   const self = signalk?.self as Record<string, unknown> | undefined;
   const environment = self?.environment as { time?: { timezoneRegion?: string } } | undefined;
-  const zone = environment?.time?.timezoneRegion || 'utc';
-  const dt = DateTime.fromISO(value, { zone: 'utc' }).setZone(zone);
+  return environment?.time?.timezoneRegion || 'utc';
+}
+
+/**
+ * Shows the explicit IANA zone name rather than an abbreviation (e.g. "BST") - UK tide tables are
+ * officially published in GMT, so the basis for the displayed time must be unambiguous rather than
+ * just locally styled.
+ */
+function formatLocalTime(value: unknown, context: TemplateContext): string {
+  if (typeof value !== 'string') return '';
+  const dt = DateTime.fromISO(value, { zone: 'utc' }).setZone(selfTimezone(context));
   return dt.isValid ? dt.toFormat('HH:mm') : '';
+}
+
+/** e.g. "27 Jun" - day of month (no leading zero) and abbreviated month name, in the local vessel's timezone. */
+function formatDayMonth(value: unknown, context: TemplateContext): string {
+  if (typeof value !== 'string') return '';
+  const dt = DateTime.fromISO(value, { zone: 'utc' }).setZone(selfTimezone(context));
+  return dt.isValid ? dt.toFormat('d MMM') : '';
 }
 
 /**
@@ -66,6 +80,8 @@ export function applyFormat(name: string, value: unknown, context: TemplateConte
   switch (name) {
     case 'local_time':
       return formatLocalTime(value, context);
+    case 'day_mon':
+      return formatDayMonth(value, context);
     case 'utc_offset':
       return formatUtcOffset(value);
     case 'position':

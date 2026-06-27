@@ -39,9 +39,13 @@ export interface PluginConfig {
    * explicit `category=` binding (e.g. `category=depth` on a resource-sourced value with no path
    * metadata of its own, see `../unitCategories.ts`). Neither has an in-process equivalent reachable via
    * the plugin API - confirmed against the signalk-server source, this resolution only happens in its
-   * REST layer. Defaults to the local loopback address - the plugin always runs on the same host as the
-   * server it's configured for, so `localhost` is reachable regardless of any external reverse proxy;
-   * override only if the server uses a non-default port.
+   * REST layer.
+   *
+   * No universal default: the plugin always runs on the same host as the server, so `localhost` is
+   * reachable regardless of any external reverse proxy, but the port varies by install method - a bare
+   * `npm install` typically defaults to 3000, while container/systemd installs commonly default to 80.
+   * Check the server's actual listening port. Either way, these endpoints must be reachable without
+   * authentication (anonymous read access) - the plugin has no login flow.
    */
   signalkApiUrl?: string;
   devices: DeviceConfig[];
@@ -56,7 +60,6 @@ export function defaultConfig(app: ServerAPI): PluginConfig {
     templatesDir: join(app.getDataDirPath(), 'templates'),
     scanOnStart: true,
     scanDurationSeconds: 20,
-    signalkApiUrl: 'http://localhost:3000',
     devices: [],
   };
 }
@@ -161,7 +164,7 @@ export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []
         type: 'string',
         title: 'SignalK API base URL',
         description:
-          'Used for a `signalk` path\'s automatic unit conversion (unless `format=raw`) and for an explicit `category=` binding (e.g. on a resource-sourced value like a tide level, which has no path metadata of its own). Defaults to the local loopback address, which always works since this plugin runs on the same host as the server - override only if it uses a non-default port.',
+          'Used for a `signalk` path\'s automatic unit conversion (unless `format=raw`) and for an explicit `category=` binding (e.g. on a resource-sourced value like a tide level, which has no path metadata of its own). Always the local loopback address (e.g. http://localhost:3000) since this plugin runs on the same host as the server - the port varies by install method (3000 for a bare npm install, often 80 for container/systemd installs; check your server). These endpoints must allow anonymous read access - the plugin has no login flow.',
         default: defaults.signalkApiUrl,
       },
       devices: {

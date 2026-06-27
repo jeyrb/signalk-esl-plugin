@@ -30,6 +30,7 @@ The source can be overridden to use the SignalK server's Resources API instead. 
 A `format` can be specified to make the value easier to understand. The supported formats are:
 
 * `local_time` - reduce a time stamp to just the time, omitting the date, and applying daylight savings if appropriate
+* `day_mon` - reduce a time stamp to day and month, e.g. `27 Jun`, applying daylight savings if appropriate
 * `utc_offset` - Show a timezone in `UTC+01:00` style format
 * `position` - Format a `{ latitude, longitude }` value as decimal degrees with hemisphere letters, e.g. `56.6250°N 6.0700°W`
 * `raw` - Don't apply automatic SignalK unit conversion and symbol display (see below)
@@ -79,7 +80,8 @@ The primary things managed and provided by the plugin are:
 * SVG Template
 * SignalK API base URL
   - Used for automatic unit conversion on `signalk`-sourced numeric values and for resolving an explicit `category=` binding - neither has an in-process equivalent, both go via this server's own REST API
-  - Defaults to the local loopback address (the plugin always runs on the same host as the server), so it rarely needs setting - only override it for a non-default port
+  - Always the local loopback address (e.g. `http://localhost:3000`) since the plugin runs on the same host as the server - the port varies by install method (3000 for a bare npm install, often 80 for container/systemd installs - check your server)
+  - These endpoints must allow anonymous read access - the plugin has no login flow
 
 ### Extending
 
