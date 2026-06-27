@@ -25,7 +25,7 @@ set of key value pairs to define the data source and formatting.
 
 For example, `path=environment.forecast.description` uses the default data source (the `self` vessel context) and the named SignalK path. A bare path with no key/value pairs at all, e.g. just `environment.forecast.description`, is shorthand for the same thing. Overriding the default context can be done with `path=environment.forecast.description,context=vessels.urn:mrn:imo:mmsi:232345678` - the `context` value must match a real SignalK context exactly as it appears in the Data Browser; there's nothing to configure for this in the plugin itself.
 
-The source can be overridden to use the SignalK server's Resources API instead. For example, `source=resources,resource=tides,path=station.name` picks the `tides` resource and pulls the `station.name` path out of the JSON response - this works for any resource type (`tides`, `waypoints`, `routes`, ...), as long as the plugin's "SignalK API base URL" setting is filled in (it can't detect its own externally-reachable address). Where a resource is specified, it will be fetched once for that render, and subsequent fields sourced from the same resource use that cached response.
+The source can be overridden to use the SignalK server's Resources API instead. For example, `source=resources,resource=tides,path=station.name` picks the `tides` resource and pulls the `station.name` path out of the JSON response - this works for any resource type (`tides`, `waypoints`, `routes`, ...), and needs nothing configured: the plugin reaches the Resources API directly (`app.resourcesApi`), not over HTTP. Where a resource is specified, it will be fetched once for that render, and subsequent fields sourced from the same resource use that cached response.
 
 A `format` can be specified to make the value easier to understand. The supported formats are:
 
@@ -70,7 +70,7 @@ The primary things managed and provided by the plugin are:
 * ESL Device
 * SVG Template
 * SignalK API base URL
-  - Used to reach this server's Resources API (e.g. signalk-tides) and unit preferences - no per-resource setup needed
+  - Only needed for a unit-converting `format=` (speed/depth/temperature), to read unit preferences - `source=resources` bindings (e.g. signalk-tides) reach the Resources API directly, no setup needed
 
 
 ### Extending

@@ -36,8 +36,9 @@ export interface PluginConfig {
   /**
    * Base URL of this SignalK server (e.g. `http://10.36.10.20:3000`), reachable from wherever the
    * plugin runs - the plugin can't know its own externally-reachable address (may be behind a reverse
-   * proxy). Used to build `{signalkApiUrl}/signalk/v2/api/resources/{resource}` for any `source=resources`
-   * binding, and `{signalkApiUrl}/signalk/v1/unitpreferences/active` for `format=speed/depth/temperature`.
+   * proxy). `source=resources` bindings go through `app.resourcesApi` in-process and don't need this;
+   * it's only used to build `{signalkApiUrl}/signalk/v1/unitpreferences/active` for a unit-converting
+   * `format=` (speed/depth/temperature), which has no in-process equivalent.
    */
   signalkApiUrl?: string;
   devices: DeviceConfig[];
@@ -156,7 +157,7 @@ export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []
         type: 'string',
         title: 'SignalK API base URL',
         description:
-          'Base URL of this SignalK server (e.g. http://10.36.10.20:3000), reachable from wherever this plugin runs - required for any template binding using `source=resources` (reads the Resources API, e.g. tides, waypoints) or a unit-converting `format=` (speed/depth/temperature). The plugin can\'t auto-detect its own externally-reachable address (e.g. behind a reverse proxy).',
+          'Base URL of this SignalK server (e.g. http://10.36.10.20:3000), reachable from wherever this plugin runs - only needed for a unit-converting `format=` binding (speed/depth/temperature), to read unit preferences. `source=resources` bindings (e.g. tides, waypoints) use the Resources API directly and don\'t need this. The plugin can\'t auto-detect its own externally-reachable address (e.g. behind a reverse proxy).',
       },
       devices: {
         type: 'array',
