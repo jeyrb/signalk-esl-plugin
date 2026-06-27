@@ -12,6 +12,7 @@ import { Binding, findBindings, parseBinding, resolveBinding } from '../render/b
 import { applyFormat } from '../render/formatters';
 import { TemplateContext } from '../render/types';
 import { assembleLiveContext } from './liveContext';
+import { logDebug, setLogLevel } from './log';
 
 registerDriver(new ZhsunycoDriver());
 
@@ -44,10 +45,12 @@ function parseColours(code: string): Colour[] {
 async function identifyVendor(address: string): Promise<string> {
   const { bluetooth, destroy } = createBluetooth();
   try {
+    logDebug(`connecting to ${address} to identify its vendor (timeout ${VENDOR_IDENTIFY_TIMEOUT_MS}ms)`);
     const adapter = await bluetooth.defaultAdapter();
     const device = await getOrDiscoverDevice(adapter, address, VENDOR_IDENTIFY_TIMEOUT_MS);
     const name = await device.getName().catch(() => undefined);
     const manufacturerId = await getManufacturerId(device);
+    logDebug(`${address}: advertised name="${name ?? ''}" manufacturerId=${manufacturerId ?? 'unknown'}`);
     const driver = allDrivers().find((candidate) => candidate.matchesAdvertisement(name, manufacturerId));
     if (!driver) {
       throw new Error(`no registered vendor driver recognises device "${name ?? address}" - specify --vendor explicitly`);
@@ -66,8 +69,10 @@ program.option(
   'require a module before running, e.g. an npm package that registers a vendor driver (repeatable)',
   (value, previous: string[] = []) => [...previous, value],
 );
+program.option('-l, --log-level <level>', 'log verbosity: info or debug (e.g. trace which URLs are fetched)', 'info');
 
 program.hook('preAction', () => {
+  setLogLevel(program.opts().logLevel);
   for (const mod of (program.opts().require as string[] | undefined) ?? []) {
     require(mod);
   }
@@ -115,7 +120,9 @@ program
     const rows: string[][] = [];
     const matchedAddresses = new Set<string>();
     for (const driver of allDrivers()) {
+      logDebug(`scanning for ${driver.vendor} devices for ${durationMs}ms`);
       const found = await driver.scan(durationMs);
+      logDebug(`${driver.vendor}: found ${found.length} device(s)`);
       for (const device of found) {
         matchedAddresses.add(device.address);
         const pid = device.pid !== undefined ? `0x${device.pid.toString(16).padStart(4, '0')}` : '';
