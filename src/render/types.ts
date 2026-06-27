@@ -12,10 +12,14 @@ export interface Bitmap {
 /**
  * Render context a template's `<desc>` bindings resolve against - see `./binding.ts`. Shaped as
  * `{ signalk: { self: {...}, [vesselContext]: {...} }, resources: { [resourceName]: ... },
- * categories: { [categoryName]: DisplayUnits } }` by `assembleRawContext` in repaintScheduler.ts,
- * fetched fresh from a template's own bindings every repaint - no separate config declares what a
- * template needs. `categories` backs an explicit `category=` binding (see `../unitCategories.ts`).
- * `meta` (unrelated, plugin-injected) holds the repaint timestamp - see `considerRepaint`.
+ * pathMeta: { [context]: { [dottedPath]: { displayUnits } } }, categories: { [categoryName]:
+ * DisplayUnits } }` by `assembleRawContext` in repaintScheduler.ts, fetched fresh from a template's own
+ * bindings every repaint - no separate config declares what a template needs. `pathMeta` is flat
+ * (dotted-path keyed, matching `GET .../vessels/<context>/meta`'s own shape), unlike `signalk`'s nested
+ * tree - it backs automatic unit conversion for a `signalk`-sourced numeric value (`format=raw` opts
+ * out). `categories` backs an explicit `category=` binding, for a value with no path metadata of its
+ * own (see `../unitCategories.ts`). `meta` (unrelated, plugin-injected) holds the repaint timestamp -
+ * see `considerRepaint`.
  */
 export type TemplateContext = Record<string, unknown>;
 
