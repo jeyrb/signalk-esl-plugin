@@ -30,15 +30,22 @@ The source can be overridden to use the SignalK server's Resources API instead. 
 A `format` can be specified to make the value easier to understand. The supported formats are:
 
 * `local_time` - reduce a time stamp to just the time, omitting the date, and applying daylight savings if appropriate
+* `utc_offset` - Show a timezone in `UTC+01:00` style format
+* `raw` - Don't apply standard SignalK unit conversion and symbol display
+
+SignalK's unit preferences are used to automatically convert values to a more humane form, and append a unit symbol like `kt` or `m`,  unless `format=raw` is specified to switch that off. However, when using plugin or API data there may be no metadata ( for example `signalk-tides` publishes tide data to the Resources API, and `level` is a raw metre value with no metadata) - in these cases a chosen `category` can be provided, and the unit preferences will be reused, for example `category=depth` for the tides level figure.
+
+Common categories:
+
 * `depth` - Use the SignalK preferred depth unit, make the conversion if needed, and tack on the unit name as a suffix
 * `speed` - Use the SignalK preferred speed unit, make the conversion if needed, and tack on the unit name as a suffix
 * `temperature` - Use the SignalK preferred temperature unit, make the conversion if needed, and tack on the unit name as a suffix
 * `position` - Format a `{ latitude, longitude }` value as decimal degrees with hemisphere letters, e.g. `56.6250°N 6.0700°W`
-* `utc_offset` - Show a timezone in `UTC+01:00` style format
+
 
 Additionally, `round=n` can be used to round to limited decimal places.
 
-These can all be combined as in `source=resources,resource=tides,path=extremes[2].level,format=depth,round=2`
+These can all be combined as in `source=resources,resource=tides,path=extremes[2].level,category=depth,round=2`
 
 ## CLI
 
@@ -71,8 +78,6 @@ The primary things managed and provided by the plugin are:
 * ESL Vendor
 * ESL Device
 * SVG Template
-* SignalK API base URL
-  - Only needed for a unit-converting `format=` (speed/depth/temperature), to read unit preferences - `source=resources` bindings (e.g. signalk-tides) reach the Resources API directly, no setup needed
 
 
 ### Extending

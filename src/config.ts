@@ -36,9 +36,12 @@ export interface PluginConfig {
   /**
    * Base URL of this SignalK server (e.g. `http://10.36.10.20:3000`), reachable from wherever the
    * plugin runs - the plugin can't know its own externally-reachable address (may be behind a reverse
-   * proxy). `source=resources` bindings go through `app.resourcesApi` in-process and don't need this;
-   * it's only used to build `{signalkApiUrl}/signalk/v1/unitpreferences/active` for a unit-converting
-   * `format=` (speed/depth/temperature), which has no in-process equivalent.
+   * proxy). `source=resources` bindings go through `app.resourcesApi` in-process, and a `signalk` path's
+   * own unit-preference metadata is read via `app.getMetadata` in-process too - neither needs this. It's
+   * only used by an explicit `category=` binding (e.g. `category=depth` on a resource-sourced value with
+   * no per-path metadata of its own), which composes signalk-server's unit-preferences REST endpoints
+   * (`/signalk/v1/unitpreferences/{categories,active,definitions}`) - that resolution logic isn't
+   * exposed via the plugin API, only the server's own internal modules.
    */
   signalkApiUrl?: string;
   devices: DeviceConfig[];
@@ -157,7 +160,7 @@ export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []
         type: 'string',
         title: 'SignalK API base URL',
         description:
-          'Base URL of this SignalK server (e.g. http://10.36.10.20:3000), reachable from wherever this plugin runs - only needed for a unit-converting `format=` binding (speed/depth/temperature), to read unit preferences. `source=resources` bindings (e.g. tides, waypoints) use the Resources API directly and don\'t need this. The plugin can\'t auto-detect its own externally-reachable address (e.g. behind a reverse proxy).',
+          'Base URL of this SignalK server (e.g. http://10.36.10.20:3000), reachable from wherever this plugin runs - only needed for an explicit `category=` binding (e.g. `category=depth` on a resource-sourced value with no SignalK path of its own, like a tide level). `source=resources` bindings and a SignalK path\'s own automatic unit conversion don\'t need this. The plugin can\'t auto-detect its own externally-reachable address (e.g. behind a reverse proxy).',
       },
       devices: {
         type: 'array',

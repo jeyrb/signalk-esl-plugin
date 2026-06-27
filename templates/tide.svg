@@ -115,7 +115,7 @@
        x="173.64978"
        y="201.8409"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.44101">3.3m</tspan><desc
-       id="desc6">source=resources,resource=tides,path=extremes.[2].level,format=depth</desc></text>
+       id="desc6">source=resources,resource=tides,path=extremes.[2].level,category=depth</desc></text>
   <text
      id="extremes.2.time"
      x="31.471279"
@@ -142,7 +142,7 @@
        x="182.71886"
        y="136.2934"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.40832">1.6m</tspan><desc
-       id="desc5">source=resources,resource=tides,path=extremes.[1].level,format=depth</desc></text>
+       id="desc5">source=resources,resource=tides,path=extremes.[1].level,category=depth</desc></text>
   <text
      id="extremes.1.time"
      x="33.328102"
@@ -177,5 +177,5 @@
        x="173.7571"
        y="88.424065"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.38653">3.4m</tspan><desc
-       id="desc4">source=resources,resource=tides,path=extremes.[0].level,format=depth</desc></text>
+       id="desc4">source=resources,resource=tides,path=extremes.[0].level,category=depth</desc></text>
 </svg>
