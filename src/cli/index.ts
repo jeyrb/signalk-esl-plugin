@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import { DOMParser } from '@xmldom/xmldom';
 import { allDrivers, getDriver, registerDriver } from '../devices/registry';
 import { ZhsunycoDriver } from '../devices/zhsunyco';
-import { createBluetooth, getManufacturerId, getOrDiscoverDevice } from '../devices/bleDiscovery';
+import { createBluetooth, getManufacturerId, getOrDiscoverDevice, withDiscovery } from '../devices/bleDiscovery';
 import { Colour, DeviceModelOverride } from '../devices/types';
 import { SvgRenderer } from '../render/svgRenderer';
 import { bitmapToPng } from '../render/png';
