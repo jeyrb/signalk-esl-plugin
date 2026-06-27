@@ -1,16 +1,9 @@
 import { Binding } from '../render/binding';
 import { TemplateContext } from '../render/types';
+import { fetchJson } from '../httpJson';
 
 const RESOURCES_API_PATH = '/signalk/v2/api/resources';
 const UNIT_PREFERENCES_PATH = '/signalk/v1/unitpreferences/active';
-
-async function fetchJson(url: string): Promise<unknown> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`fetch failed: ${url} (${response.status})`);
-  }
-  return response.json();
-}
 
 /** `context=self` -> `vessels/self`, `context=vessels.urn:mrn:imo:mmsi:1` -> `vessels/urn:mrn:imo:mmsi:1` - matches the REST path for that context's full-data-model subtree. */
 function contextPath(context: string): string {
