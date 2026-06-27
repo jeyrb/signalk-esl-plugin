@@ -166,7 +166,7 @@ export function configSchema(app: ServerAPI, discovered: DiscoveredDevice[] = []
         type: 'string',
         title: 'SignalK API base URL (leave blank to auto-detect)',
         description:
-          'Used for a `signalk` path\'s automatic unit conversion (unless `format=raw`) and for an explicit `category=` binding (e.g. on a resource-sourced value like a tide level, which has no path metadata of its own). Left blank, the plugin probes the realistic options at startup (3000 for a bare npm install, then 80/443 for container/systemd installs) and uses whichever responds - only set this to skip probing. Either way it must allow anonymous read access - the plugin has no login flow.',
+          'Used for plugin access to SignalK REST APIs not yet integrated for direct plugin access. Left blank, the plugin probes the likely options at startup (3000, 80, 443 ) - only set this manually to skip probing. Anonymous read access is required.',
         enum: ['', ...SIGNALK_API_URL_OPTIONS],
       },
       devices: {
