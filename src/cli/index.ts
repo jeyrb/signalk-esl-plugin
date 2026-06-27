@@ -1,16 +1,29 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'fs/promises';
 import { Command } from 'commander';
+import { DOMParser } from '@xmldom/xmldom';
 import { allDrivers, getDriver, registerDriver } from '../devices/registry';
 import { ZhsunycoDriver } from '../devices/zhsunyco';
 import { createBluetooth, getManufacturerId, getOrDiscoverDevice } from '../devices/bleDiscovery';
 import { Colour, DeviceModelOverride } from '../devices/types';
 import { SvgRenderer } from '../render/svgRenderer';
 import { bitmapToPng } from '../render/png';
+import { Binding, findBindings, parseBinding, resolveBinding } from '../render/binding';
+import { applyFormat } from '../render/formatters';
+import { assembleLiveContext } from './liveContext';
 
 registerDriver(new ZhsunycoDriver());
 
 const VENDOR_IDENTIFY_TIMEOUT_MS = 30_000;
+const DEFAULT_SIGNALK_URL = 'http://localhost:3000';
+
+/** Renders a binding's resolved value the same way `SvgRenderer` does for a `<desc>` (see svgRenderer.ts). */
+function renderBindingValue(binding: Binding, context: import('../render/types').TemplateContext): string {
+  const value = resolveBinding(binding, context);
+  if (binding.format) return applyFormat(binding.format, value, context, binding.round);
+  if (typeof value === 'number' && binding.round !== undefined) return value.toFixed(binding.round);
+  return String(value ?? '');
+}
 
 const COLOUR_CODES: Record<string, Colour[]> = {
   BW: ['black', 'white'],
