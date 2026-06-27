@@ -1,6 +1,6 @@
 import { DOMParser } from '@xmldom/xmldom';
 import { TemplateContext } from './types';
-import { applyFormat } from './formatters';
+import { applyFormat, DisplayUnits, formatDisplayUnits } from './formatters';
 
 const SOURCES = ['signalk', 'resources'] as const;
 type Source = (typeof SOURCES)[number];
@@ -15,6 +15,7 @@ export interface Binding {
   /** Required when `source === 'resources'` - the Resources API resource type, e.g. `tides`, `waypoints`. */
   resource?: string;
   path: string;
+  /** A named formatter (see `./formatters.ts`), or `'raw'` to suppress metadata-driven auto unit-conversion (see `renderBinding`). */
   format?: string;
   round?: number;
 }

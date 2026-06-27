@@ -3,44 +3,24 @@ import { evaluate } from 'mathjs';
 import { TemplateContext } from './types';
 
 /**
- * Matches the shape of a category entry from SignalK's `/signalk/v1/unitpreferences/active`
- * (or `/presets/<name>`) endpoint - see https://demo.signalk.org/documentation/Guides/Unit_Preferences.html.
- * `formula`/`symbol` are only present inline when the target unit isn't the base unit; when
- * absent here, the caller assembling the template context is expected to have already resolved
- * them from `/signalk/v1/unitpreferences/definitions` (or left them out because no conversion
- * is needed, i.e. targetUnit === baseUnit).
+ * Matches `displayUnits` on a path's own metadata (`app.getMetadata(path).displayUnits` in the live
+ * plugin, the `.../meta` tree over HTTP in the CLI) - SignalK's per-path unit-preference info, fully
+ * resolved (formula/symbol ready to use), unlike the global `/signalk/v1/unitpreferences/active`
+ * endpoint which only gives a bare `targetUnit` name with no conversion math at all.
  */
-interface UnitPreference {
-  targetUnit?: string;
-  symbol?: string;
+export interface DisplayUnits {
+  category: string;
+  targetUnit: string;
   formula?: string;
+  symbol?: string;
   displayFormat?: string;
 }
 
-function unitPreference(context: TemplateContext, category: string): UnitPreference {
-  const resources = context.resources as Record<string, unknown> | undefined;
-  const unitPreferences = resources?.unitPreferences as Record<string, UnitPreference> | undefined;
-  return unitPreferences?.[category] ?? {};
-}
-
-/**
- * `/signalk/v1/unitpreferences/active` only includes `symbol`/`targetUnit`/`formula` for a category
- * when its target unit differs from the SI base unit - the common case of "no conversion configured"
- * (display in the base unit) otherwise has nothing to take a suffix from at all. This is each
- * category's own base-unit symbol, used as the fallback.
- */
-const BASE_UNIT_SYMBOLS: Record<string, string> = {
-  length: 'm',
-  speed: 'm/s',
-  temperature: 'K',
-};
-
-/** Converts a base-SI value (always what SignalK paths/APIs deliver) to the preferred display unit and formats it with the unit's symbol, e.g. 3.42 -> "11.2ft". */
-function formatUnitValue(value: unknown, pref: UnitPreference, round: number | undefined, category: string): string {
-  if (typeof value !== 'number') return '';
-  const converted = pref.formula ? Number(evaluate(pref.formula, { value })) : value;
-  const decimals = round ?? (pref.displayFormat?.includes('.') ? pref.displayFormat.split('.')[1].length : 0);
-  const symbol = pref.symbol ?? pref.targetUnit ?? BASE_UNIT_SYMBOLS[category] ?? '';
+/** Converts a base-SI value (always what SignalK paths deliver) to its metadata's preferred display unit and formats it with the unit's symbol, e.g. 3.42 -> "11.2ft". */
+export function formatDisplayUnits(value: number, displayUnits: DisplayUnits, round: number | undefined): string {
+  const converted = displayUnits.formula ? Number(evaluate(displayUnits.formula, { value })) : value;
+  const decimals = round ?? (displayUnits.displayFormat?.includes('.') ? displayUnits.displayFormat.split('.')[1].length : 0);
+  const symbol = displayUnits.symbol ?? displayUnits.targetUnit;
   return `${converted.toFixed(decimals)}${symbol}`;
 }
 
@@ -84,12 +64,6 @@ function formatPosition(value: unknown, round: number | undefined): string {
 /** Applies a named `format=` formatter to a resolved binding value. */
 export function applyFormat(name: string, value: unknown, context: TemplateContext, round: number | undefined): string {
   switch (name) {
-    case 'speed':
-      return formatUnitValue(value, unitPreference(context, 'speed'), round, 'speed');
-    case 'depth':
-      return formatUnitValue(value, unitPreference(context, 'length'), round, 'length');
-    case 'temperature':
-      return formatUnitValue(value, unitPreference(context, 'temperature'), round, 'temperature');
     case 'local_time':
       return formatLocalTime(value, context);
     case 'utc_offset':
