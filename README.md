@@ -1,4 +1,4 @@
-# ESL for SignalK
+# eInk Labels for SignalK
 
 ** BETA - basic functionality, limited vendor/product support **
 
