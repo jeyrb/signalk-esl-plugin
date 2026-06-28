@@ -36,15 +36,15 @@ The source can be overridden to use the SignalK server's Resources API instead. 
 
 #### Plugin Data
 
-`source=einklabel` reads data injected by the plugin itself, rather than from SignalK. Currently the only such value is `path=repainted`, the timestamp of the current repaint - for example `source=einklabel,path=repainted,format=datetime_short` to show when the label was last updated.
+`source=einklabel` reads data injected by the plugin itself, rather than from SignalK. Currently the only such value is `path=repainted`, the timestamp of the current repaint - for example `source=einklabel,path=repainted,format=local_datetime_short` to show when the label was last updated.
 
 #### Customizing Output
 
 A `format` can be specified to make the value easier to understand. The supported formats are:
 
-* `local_time` - reduce a time stamp to just the time, omitting the date, and applying daylight savings if appropriate
+* `local_time` - reduce a time stamp to just the time (H:M:S), omitting the date, and applying daylight savings if appropriate
 * `day_mon` - reduce a time stamp to day and month, e.g. `27 Jun`, applying daylight savings if appropriate
-* `datetime_short` - format a time stamp as day, abbreviated month, 2-digit year and 24h time, e.g. `21 Jun 26 18:05`, applying daylight savings if appropriate
+* `local_datetime_short` - format a time stamp as day, abbreviated month, 2-digit year and 24h time, e.g. `21 Jun 26 18:05`, applying daylight savings if appropriate
 * `utc_offset` - Show a timezone in `UTC+01:00` style format
 * `position` - Format a `{ latitude, longitude }` value as decimal degrees with hemisphere letters, e.g. `56.6250°N 6.0700°W`
 * `raw` - Don't apply automatic SignalK unit conversion and symbol display (see below)
