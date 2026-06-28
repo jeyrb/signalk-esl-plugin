@@ -1,6 +1,6 @@
 {
-  "name": "@rhizomatics/signalk-esl-plugin",
-  "version": "0.3.1",
+  "name": "@rhizomatics/signalk-einklabel-plugin",
+  "version": "0.3.2",
   "description": "SignalK plugin that renders selected SignalK data to eInk Electronic Shelf Labels",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -61,11 +61,11 @@
   "license": "APACHE-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rhizomatics/signalk-esl-plugin.git"
+    "url": "git+https://github.com/rhizomatics/signalk-einklabel-plugin.git"
   },
   "author": "jey burrows",
   "bugs": {
-    "url": "https://github.com/rhizomatics/signalk-esl-plugin/issues"
+    "url": "https://github.com/rhizomatics/signalk-einklabel-plugin/issues"
   },
-  "homepage": "https://github.com/rhizomatics/signalk-esl-plugin#readme"
+  "homepage": "https://github.com/rhizomatics/signalk-einklabel-plugin#readme"
 }

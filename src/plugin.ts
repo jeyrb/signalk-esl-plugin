@@ -64,7 +64,7 @@ export function createPlugin(app: ServerAPI): Plugin {
   let scanStartedAt: number | undefined;
 
   const plugin: Plugin = {
-    id: 'signalk-esl-plugin',
+    id: 'signalk-einklabel-plugin',
     name: 'eInk ESL (Electronic Shelf Label)',
     description: 'Renders selected SignalK data to BLE eInk Electronic Shelf Labels',
     schema: () => configSchema(app, lastDiscovered),
