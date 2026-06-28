@@ -92,7 +92,8 @@
      font-size="14"
      font-family="monospace"
      fill="black"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000">High Water</text>
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000"><desc
+   id="desc13">source=resources,resource=tides,path=extremes.[0].label</desc>High Water</text>
   <text
      id="extremes.1"
      x="13.35283"
@@ -100,7 +101,8 @@
      font-size="14"
      font-family="monospace"
      fill="black"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000">Low Water</text>
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000"><desc
+   id="desc14">source=resources,resource=tides,path=extremes.[1].label</desc>Low Water</text>
   <text
      id="extremes.2"
      x="7.9661016"
@@ -108,7 +110,8 @@
      font-size="14"
      font-family="monospace"
      fill="red"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000">High Water</text>
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.6667px;font-family:monospace;-inkscape-font-specification:'monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000"><desc
+   id="desc15">source=resources,resource=tides,path=extremes.[2].label</desc>High Water</text>
   <text
      id="environment.time.timezoneRegion"
      x="338.47461"
