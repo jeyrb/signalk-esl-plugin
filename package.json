@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "cli": "ts-node src/cli/index.ts"
+    "cli": "ts-node src/cli/index.ts",
+    "test": "node --require ts-node/register --test src"
   },
   "signalk":{
     "displayName":"eInk ESL Instruments",
