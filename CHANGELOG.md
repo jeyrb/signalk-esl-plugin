@@ -1,3 +1,5 @@
+# 0.4.2
+- Fix High/Low display for tide clock template
 # 0.4.1
 - Packaging fixes
 # 0.4.0
