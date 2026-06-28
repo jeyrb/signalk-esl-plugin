@@ -55,7 +55,7 @@ function formatDayMonth(value: unknown, context: TemplateContext): string {
 }
 
 /** e.g. "21 Jun 26 18:05" - day of month (no leading zero), abbreviated month, 2-digit year, and 24h time, in the local vessel's timezone. */
-function formatDateDmyHm(value: unknown, context: TemplateContext): string {
+function formatLocalDatetimeShort(value: unknown, context: TemplateContext): string {
   if (typeof value !== 'string') return '';
   const dt = DateTime.fromISO(value, { zone: 'utc' }).setZone(selfTimezone(context));
   return dt.isValid ? dt.toFormat('d MMM yy HH:mm') : '';
@@ -90,7 +90,7 @@ export function applyFormat(name: string, value: unknown, context: TemplateConte
     case 'day_mon':
       return formatDayMonth(value, context);
     case 'local_datetime_short':
-      return formatDateDmyHm(value, context);
+      return formatLocalDatetimeShort(value, context);
     case 'utc_offset':
       return formatUtcOffset(value);
     case 'position':

@@ -23,8 +23,8 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="0.98333333"
-     inkscape:cx="103.72881"
-     inkscape:cy="169.32203"
+     inkscape:cx="250.16949"
+     inkscape:cy="246.61017"
      inkscape:window-width="1488"
      inkscape:window-height="674"
      inkscape:window-x="0"
@@ -58,16 +58,18 @@
    id="desc1">source=resources,resource=tides,path=station.name</desc></text>
   <text
      id="station.name-8"
-     x="237.19206"
-     y="234.27425"
+     x="325.49939"
+     y="195.87753"
      font-size="18"
      font-family="serif"
      fill="black"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6667px;font-family:serif;-inkscape-font-specification:'serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#4d4d4d"><tspan
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#999999;stroke-width:2.39571"
+     transform="scale(0.83037506,1.2042751)"><tspan
        sodipodi:role="line"
        id="tspan1"
-       x="237.19206"
-       y="234.27425">signalk-einklabel-plugin by Rhizomatics</tspan></text>
+       x="325.49939"
+       y="195.87753"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:2.39571;fill:#999999">signalk-einklabel-plugin</tspan></text>
   <text
      id="station.name-8-2"
      x="4.3477793"

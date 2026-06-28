@@ -85,6 +85,18 @@ test('resolveBinding', async (t) => {
       /resource "waypoints" which is not present/,
     );
   });
+
+  await t.test('reads an einklabel-sourced binding from context.meta', () => {
+    const metaContext: TemplateContext = { ...context, meta: { repainted: '2026-06-21T18:05:00Z' } };
+    assert.equal(resolveBinding(parseBinding('source=einklabel,path=repainted'), metaContext), '2026-06-21T18:05:00Z');
+  });
+
+  await t.test('throws when no meta is present in the render context', () => {
+    assert.throws(
+      () => resolveBinding(parseBinding('source=einklabel,path=repainted'), context),
+      /source "einklabel" but no "meta" is present/,
+    );
+  });
 });
 
 test('renderBinding', async (t) => {
@@ -122,5 +134,10 @@ test('renderBinding', async (t) => {
   await t.test('falls through to String() for anything else', () => {
     const context: TemplateContext = { signalk: { self: { a: true } } };
     assert.equal(renderBinding(parseBinding('path=a'), context), 'true');
+  });
+
+  await t.test('source=einklabel,format=local_datetime_short renders the repaint timestamp', () => {
+    const context: TemplateContext = { signalk: { self: {} }, meta: { repainted: '2026-06-21T18:05:00Z' } };
+    assert.equal(renderBinding(parseBinding('source=einklabel,path=repainted,format=local_datetime_short'), context), '21 Jun 26 18:05');
   });
 });

@@ -41,6 +41,14 @@ test('applyFormat', async (t) => {
     assert.equal(applyFormat('day_mon', '2026-06-28T12:00:00Z', context, undefined), '28 Jun');
   });
 
+  await t.test('local_datetime_short formats day, abbreviated month, 2-digit year and 24h time', () => {
+    assert.equal(applyFormat('local_datetime_short', '2026-06-21T17:05:00Z', context, undefined), '21 Jun 26 18:05');
+  });
+
+  await t.test('local_datetime_short returns empty string for a non-string value', () => {
+    assert.equal(applyFormat('local_datetime_short', 42, context, undefined), '');
+  });
+
   await t.test('utc_offset shows a fixed-offset zone\'s numeric UTC offset', () => {
     assert.equal(applyFormat('utc_offset', 'Etc/UTC', context, undefined), 'UTC+00:00');
   });
