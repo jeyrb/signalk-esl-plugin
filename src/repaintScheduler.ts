@@ -3,6 +3,7 @@ import { join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { ServerAPI, Path, SignalKResourceType } from '@signalk/server-api';
 import { DeviceConfig, PluginConfig, parseDevice, resolveTemplatePath, resolveTemplatesDir } from './config';
+import { withRetries } from './devices/bleDiscovery';
 import { getDriver } from './devices/registry';
 import { SvgRenderer } from './render/svgRenderer';
 import { Binding, findBindings } from './render/binding';
@@ -161,7 +162,13 @@ async function considerRepaint(
   const renderContext: TemplateContext = { ...rawContext, meta: { repaintedAt: new Date().toISOString() } };
   const renderer = new SvgRenderer();
   const bitmap = await renderer.render(templatePath, renderContext, metadata.width, metadata.height - metadata.voffset);
-  await driver.paint(bitmap, { address: model.address, aesKey: device.aesKey });
+  const connectTimeoutMs = config.paintConnectTimeoutSeconds * 1000;
+  await withRetries(config.paintRetries, async (attempt) => {
+    if (attempt > 1) {
+      app.debug(`"${device.friendlyName}": paint attempt ${attempt}/${config.paintRetries}`);
+    }
+    await driver.paint(bitmap, { address: model.address, aesKey: device.aesKey, connectTimeoutMs });
+  });
 
   state[device.friendlyName] = { hash };
   saveState(app, state);

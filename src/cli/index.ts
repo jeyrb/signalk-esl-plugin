@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import { DOMParser } from '@xmldom/xmldom';
 import { allDrivers, getDriver, registerDriver } from '../devices/registry';
 import { ZhsunycoDriver } from '../devices/zhsunyco';
-import { createBluetooth, forEachAdvertisedDevice, getManufacturerId, getOrDiscoverDevice, withDiscovery } from '../devices/bleDiscovery';
+import { createBluetooth, forEachAdvertisedDevice, getManufacturerId, getOrDiscoverDevice, withDiscovery, withRetries } from '../devices/bleDiscovery';
 import { Colour, DeviceModelOverride } from '../devices/types';
 import { SvgRenderer } from '../render/svgRenderer';
 import { bitmapToPng } from '../render/png';
@@ -158,6 +158,8 @@ program
   .option('--height <px>', 'render height', '240')
   .option('--voffset <px>', 'vertical pixel offset of the panel - overrides the looked-up model for unsupported hardware (requires --colours)', '0')
   .option('--colours <code>', 'device colour palette for unsupported hardware: BW, BWR, or BWRY - overrides the looked-up model (uses --width/--height/--voffset)')
+  .option('--connect-timeout <seconds>', 'BLE connect timeout before giving up on an attempt', '30')
+  .option('--retries <n>', 'number of paint attempts (including the first) before giving up', '3')
   .action(async (opts) => {
     const vendor = opts.vendor ?? (await identifyVendor(opts.address));
     const driver = getDriver(vendor);
@@ -177,7 +179,13 @@ program
     const context = await assembleLiveContext(opts.url, bindings);
     const renderer = new SvgRenderer();
     const bitmap = await renderer.render(opts.template, context, Number(opts.width), Number(opts.height));
-    await driver.paint(bitmap, { address: opts.address, aesKey: opts.aesKey, modelOverride });
+    const connectTimeoutMs = Number(opts.connectTimeout) * 1000;
+    await withRetries(Number(opts.retries), async (attempt) => {
+      if (attempt > 1) {
+        logDebug(`paint attempt ${attempt}/${opts.retries}`);
+      }
+      await driver.paint(bitmap, { address: opts.address, aesKey: opts.aesKey, modelOverride, connectTimeoutMs });
+    });
     console.log(`painted ${opts.address} (${bitmap.width}x${bitmap.height})`);
   });
 

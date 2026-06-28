@@ -24,7 +24,10 @@ const CHUNK_WRITE_DELAY_MS = 20;
 const AUTH_SETTLE_DELAY_MS = 500;
 const STATUS_WAIT_TIMEOUT_MS = 60_000;
 const DEVICE_DISCOVERY_TIMEOUT_MS = 30_000;
-const DEVICE_CONNECT_TIMEOUT_MS = 10_000;
+/** Used while identifying a device during a scan - kept short since a scan may be enumerating several devices. */
+const SCAN_CONNECT_TIMEOUT_MS = 10_000;
+/** Fallback when `VendorDeviceConfig.connectTimeoutMs` is omitted (e.g. a bare CLI `paint` call) - matches `defaultConfig().paintConnectTimeoutSeconds`. */
+const DEFAULT_PAINT_CONNECT_TIMEOUT_MS = 30_000;
 
 export class ZhsunycoDriver implements VendorDriver {
   readonly vendor = 'zhsunyco';
@@ -75,7 +78,7 @@ export class ZhsunycoDriver implements VendorDriver {
       const adapter = await bluetooth.defaultAdapter();
       const device = await getOrDiscoverDevice(adapter, config.address, DEVICE_DISCOVERY_TIMEOUT_MS);
 
-      await connectWithTimeout(device, DEVICE_CONNECT_TIMEOUT_MS);
+      await connectWithTimeout(device, config.connectTimeoutMs ?? DEFAULT_PAINT_CONNECT_TIMEOUT_MS);
       try {
         const gatt = await device.gatt();
         const service = await gatt.getPrimaryService(WOLINK_SERVICE_UUID);
@@ -148,7 +151,7 @@ async function readDeviceDetails(
   const fallback = { info: advertisedInfo, batteryMv: undefined };
   const read = async () => {
     try {
-      await connectWithTimeout(device, DEVICE_CONNECT_TIMEOUT_MS);
+      await connectWithTimeout(device, SCAN_CONNECT_TIMEOUT_MS);
       try {
         const gatt = await device.gatt();
         const service = await gatt.getPrimaryService(WOLINK_SERVICE_UUID);
@@ -171,5 +174,5 @@ async function readDeviceDetails(
   // `getPrimaryService`/`readValue`) has no timeout of its own either - race the whole read so
   // one unresponsive device can't stall the rest of the scan (see `plugin.ts`'s `scanInProgress`,
   // which otherwise stays set forever and silently skips every later scan).
-  return Promise.race([read(), sleep(DEVICE_CONNECT_TIMEOUT_MS * 2).then(() => fallback)]);
+  return Promise.race([read(), sleep(SCAN_CONNECT_TIMEOUT_MS * 2).then(() => fallback)]);
 }
