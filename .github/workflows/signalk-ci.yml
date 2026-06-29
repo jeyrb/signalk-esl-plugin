@@ -9,5 +9,3 @@ on:
 jobs:
   test:
     uses: SignalK/signalk-server/.github/workflows/plugin-ci.yml@master
-    with:
-        
