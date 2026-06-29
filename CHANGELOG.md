@@ -1,3 +1,6 @@
+# 0.4.5
+- Updated `tide.svg` layout
+- Added SignalK standard Github Actions workflow
 # 0.4.4
 - Update `node-ble` to new packaging
 # 0.4.3
