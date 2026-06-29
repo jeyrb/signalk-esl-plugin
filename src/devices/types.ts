@@ -1,4 +1,4 @@
-import { Device } from 'node-ble';
+import { Device } from '@naugehyde/node-ble';
 import { Bitmap } from '../render/types';
 
 export type Colour = 'black' | 'white' | 'red' | 'yellow';

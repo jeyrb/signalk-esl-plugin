@@ -1,9 +1,10 @@
 /**
- * node-ble ships no type declarations. This is a direct transcription of the
- * public surface documented in its README/JSDoc (https://github.com/chrvadala/node-ble),
+ * @naugehyde/node-ble's shipped typings use `export =`, which doesn't support the named
+ * imports the rest of this codebase uses. This is a direct transcription of the public
+ * surface documented in its README/JSDoc (https://github.com/chrvadala/node-ble),
  * limited to what this driver uses.
  */
-declare module 'node-ble' {
+declare module '@naugehyde/node-ble' {
   import { EventEmitter } from 'events';
 
   export class GattCharacteristic extends EventEmitter {
