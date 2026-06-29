@@ -1,4 +1,4 @@
-import { Device } from 'node-ble';
+import { Device } from '@naugehyde/node-ble';
 import { Bitmap } from '../../render/types';
 import { DeviceMetadata, DiscoveredDevice, VendorDeviceConfig, VendorDriver } from '../types';
 import { connectWithTimeout, createBluetooth, getOrDiscoverDevice, sleep } from '../bleDiscovery';

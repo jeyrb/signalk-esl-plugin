@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Device } from 'node-ble';
+import { Device } from '@naugehyde/node-ble';
 import { connectWithTimeout, createBluetooth, withRetries } from './bleDiscovery';
 
 test('createBluetooth refuses to run on a non-Linux platform', { skip: process.platform === 'linux' }, () => {
